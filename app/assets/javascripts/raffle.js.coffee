@@ -1,23 +1,22 @@
-# this is a function
-# the @ makes it global
-# $scope is the arg, it allows us 
-# to interact with the view
-@RaffleCtrl = ($scope) ->
-  $scope.entries = [
-  	{ name: "Larry" }
-  	{ name: "Curly" }
-  	{ name: "Moe" }
-  ]
+app = angular.module("Raffler", ["ngResource"])
+
+app.factory "Entry", ($resource) ->
+  $resource("/entries/:id.json", {id: "@id"}, {update: {method: "PUT"}}) 
+
+@RaffleCtrl = ($scope, Entry) ->
+  $scope.entries = Entry.query()
 
   $scope.addEntry = ->
-  	$scope.entries.push($scope.newEntry)
+  	entry = Entry.save($scope.newEntry)
+  	$scope.entries.push(entry)
   	$scope.newEntry = {}
 
   $scope.drawWinner = ->
   	pool = []
   	angular.forEach $scope.entries, (entry) ->
-  	  pool.push(entry) if !entry.winner
+  		pool.push(entry) if !entry.winner
   	if pool.length > 0
-  	  entry = pool[Math.floor(Math.random() * pool.length)]
-  	  entry.winner = true
-  	  $scope.lastWinner = entry
+  		entry = pool[Math.floor(Math.random()*pool.length)]
+  		entry.winner = true
+  		entry.$update()
+  		$scope.lastWinner = entry
